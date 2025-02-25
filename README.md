@@ -33,7 +33,11 @@ I am not responsible for any issues that this script may cause on your Steam Dec
   ```bash
   ./post-update.sh
   ```
-  4. Altogether.
+  4. (Optional) Remove the cloned repo after running the script.
+  ```bash
+  rm -R steam-deck-post-update-script
+  ```
+  5. Altogether.
   ```bash
   git clone https://github.com/dshk0718/steam-deck-post-update-script.git
   cd steam-deck-post-update-script
