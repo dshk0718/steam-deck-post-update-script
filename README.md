@@ -46,6 +46,18 @@ I am not responsible for any issues that this script may cause on your Steam Dec
   sudo cp -R ./Cursors/Breeze_Dark_Red /usr/share/icons
   sudo sed -i "s/^Inherits=Adwaita*/Inherits=Breeze_Dark_Red/" /usr/share/icons/default/index.theme
   ```
-  You can change which cursor pack to use as default by installing the cursor pack from the KDE settings > Appearance > Cursors > Get New Cursors and then copying the folder of the installed custom cursor pack from `/home/deck/.icons` to the repo's directory `Cursors`. Once copied, you can replace the `Breeze_Dark_Red` in these commands with the name of the cursor pack you just installed.
+
+  You can change which cursor pack to use as default by installing the cursor pack from the KDE settings > Appearance > Cursors > Get New Cursors and then copying the folder of the installed custom cursor pack from `/home/deck/.icons` to the repo's directory `Cursors`.
+  
+  Once copied, you can replace the `Breeze_Dark_Red` in these commands with the name of the cursor pack you just installed.
+  
   If you wish to keep your current cursor settings, you can disable these lines by commenting them out with `#` at the front of these commands.
   By default, these lines are commented out as some may not find Breeze Dark Red cursor pack attractive. Uncomment them if you wish to change your default cursor on your Steam Deck.
+
+  * Option to update system.
+    * There's a line that's commented out that can be uncommented to update the system:
+    ```bash
+    # echo y | sudo pacman -Syyu # Enable this if you want to update the system
+    ```
+    
+    Uncomment this line if you wish to install any newest updates for the SteamOS. Note that this is generally not recommended as this would install the latest, bleeding-edge packages for SteamOS which may or may not be broken; hence, this is the reason why it is disabled by default.
