@@ -4,7 +4,7 @@
 sudo -S steamos-readonly disable
 
 # Set the default cursor
-sudo cp -R /home/deck/.icons/Breeze_Dark_Red /usr/share/icons
+sudo cp -R ./Cursors/Breeze_Dark_Red /usr/share/icons
 sudo sed -i "s/^Inherits=Adwaita*/Inherits=Breeze_Dark_Red/" /usr/share/icons/default/index.theme
 
 # Populate Pacman keys and install necessary tools
