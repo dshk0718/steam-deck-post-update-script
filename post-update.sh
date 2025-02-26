@@ -73,6 +73,7 @@ if [ $? -ne 0 ]; then
 fi
 # Change to `/home/deck/.scripts` directory before installing any user apps
 cd /home/deck/.scripts
+rm -rf ./yay-bin
 git clone https://aur.archlinux.org/yay-bin.git >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error cloning yay-bin repository."
@@ -91,7 +92,6 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 cd ..
-rm -rf ./yay-bin
 # Link fix for Yay
 sudo ln -sf /usr/lib/libalpm.so /usr/lib/libalpm.so.15 >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
@@ -103,6 +103,7 @@ if [ $? -ne 0 ]; then
 	echo "Error installing progress via yay."
 	exit 1
 fi
+rm -rf ./yay-bin
 
 # Install Tailscale (See more here https://tailscale.com/)
 rm -rf ./deck-tailscale
@@ -122,6 +123,7 @@ if [ $? -ne 0 ]; then
 	echo "Error sourcing Tailscale profile."
 	exit 1
 fi
+rm -rf ./deck-tailscale
 
 # Install Warp Terminal (See more here https://www.warp.dev/)
 sudo rm -rf /opt/warpdotdev/warp-terminal
