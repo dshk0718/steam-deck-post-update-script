@@ -1,5 +1,19 @@
 #!/bin/sh
 
+# Get the last update's build ID
+LAST_BUILD_ID=$(cat /etc/post-update.last-release | grep -E "^BUILD_ID=" | cut -d'=' -f2)
+
+# Get the current OS release info
+source /etc/os-release
+
+echo Last OS Build "${LAST_BUILD_ID}"
+echo Current OS BUild "${BUILD_ID}"
+
+if [ -n "${LAST_BUILD_ID}" ] && [ "${BUILD_ID}" == "${LAST_BUILD_ID}" ]; then
+	echo "The system is up to date."
+	exit 0 # Return out early if the system is up to date
+fi
+
 # Allow system file configurations
 sudo -S steamos-readonly disable
 
@@ -40,5 +54,9 @@ sudo rm -R /opt/warpdotdev/warp-terminal
 wget -O /home/deck/Scripts/warp-terminal.pkg.tar.zst https://app.warp.dev/download?package=pacman
 echo y | sudo pacman -U /home/deck/Scripts/warp-terminal.pkg.tar.zst
 
+# Store the current OS update version to compare to later
+echo Storing the current OS release info...
+sudo tee /etc/post-update.last-release </etc/os-release
+
 # Set the system back to read-only
-sudo steamos-readonly enable
+sudo -S steamos-readonly enable
