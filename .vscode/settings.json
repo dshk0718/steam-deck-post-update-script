@@ -1,6 +1,7 @@
 {
 	"conventionalCommits.scopes": [
 		"Styles",
-		"Scripts"
+		"Scripts",
+		"VSCode"
 	]
 }
