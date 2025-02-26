@@ -33,7 +33,7 @@ fi
 touch ${LOG_FILE}
 
 # Allow system file configurations
-sudo -S steamos-readonly disable
+sudo steamos-readonly disable
 
 # Set the default cursor; Uncomment if you wish to change your default cursor
 # sudo cp -R ./Cursors/Breeze_Dark_Red /usr/share/icons
@@ -143,6 +143,6 @@ rm /home/deck/.scripts/warp-terminal.pkg.tar.zst
 sudo tee /etc/post-update.last-release < /etc/os-release 1> /dev/null
 
 # Set the system back to read-only
-sudo -S steamos-readonly enable
+sudo steamos-readonly enable
 
 exit 0
