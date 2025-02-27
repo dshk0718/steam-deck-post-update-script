@@ -11,16 +11,16 @@ source /etc/os-release
 
 if [ -n "${LAST_BUILD_ID}" ] && [ "${BUILD_ID}" == "${LAST_BUILD_ID}" ]; then
 	echo "The post-update has already been run for this build."
-	echo Last OS Build "${LAST_BUILD_ID}"
-	echo Current OS BUild "${BUILD_ID}"
+	echo Last SteamOS Build "${LAST_BUILD_ID}"
+	echo Current SteamOS Build "${BUILD_ID}"
 	exit 0 # Return out early if the system is up to date
 elif [ -n "${LAST_BUILD_ID}" ] && [ "${BUILD_ID}" != "${LAST_BUILD_ID}" ]; then
 	echo "The post-update has not been run for this build."
-	echo Last OS Build "${LAST_BUILD_ID}"
-	echo Current OS BUild "${BUILD_ID}"
+	echo Last SteamOS Build "${LAST_BUILD_ID}"
+	echo Current SteamOS Build "${BUILD_ID}"
 else
 	echo "The post-update has not been run before."
-	echo Current OS BUild "${BUILD_ID}"
+	echo Current SteamOS Build "${BUILD_ID}"
 fi
 
 # Prompt for password if only if the current user is `deck`
@@ -107,16 +107,53 @@ if [ $? -ne 0 ]; then
 	echo "Error linking libalpm.so to libalpm.so.15."
 	exit 1
 fi
-# Run the script for installing Yay; only run it if the current user is `deck`.
+# Run this part for installing Yay using the default `deck` user.
 # This is due to the  `makepkg` command having a hard limitation against the root user
 # running the command to prevent any potential permanent damage to the system by design.
 CURRENT_USER=$(whoami)
-if [ "${CURRENT_USER}" == "deck" ]; then
-	echo $PASSWORD | ./post-update-user.sh >> ${LOG_FILE} 2>&1
-	if [ $? -ne 0 ]; then
-		echo "Error running post-update-user.sh for installing Yay."
-		exit 1
+
+# Create a function to force run the command `deck` user if ran by root
+# Otherwise, run the command as is
+run_as_user() {
+	if [ "${CURRENT_USER}" == "root" ]; then
+		# Run the script as the `deck` user for installing Yay due to the `makepkg` limitation
+		sudo -u deck $@
+	elif [ "${CURRENT_USER}" == "deck" ]; then
+		$@
 	fi
+}
+
+# Change to `SCRIPTS_DIR` directory before installing any user apps
+cd ${SCRIPTS_DIR}
+rm -rf ./yay-bin
+run_as_user git clone https://aur.archlinux.org/yay-bin.git >> ${LOG_FILE} 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error cloning yay-bin repository."
+	exit 1
+fi
+cd yay-bin
+# Pacman version fix for installing Yay
+run_as_user sed -i -e 's/pacman>6.1/pacman>6/g' PKGBUILD >> ${LOG_FILE} 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error fixing the PKGBUILD file for yay."
+	exit 1
+fi
+run_as_user makepkg --noconfirm -s >> ${LOG_FILE} 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error installing yay."
+	exit 1
+fi
+run_sudo pacman --noconfirm -U yay-bin-*.pkg.tar.zst >> ${LOG_FILE} 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error installing yay via pacman."
+	exit 1
+fi
+cd ..
+rm -rf ./yay-bin
+run_as_user yay --noconfirm -S progress >> ${LOG_FILE} 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error installing progress via yay."
+	exit 1
 fi
 
 # Change to `SCRIPTS_DIR` directory before installing any user apps
@@ -166,6 +203,6 @@ sudo -S tee /etc/post-update.last-release < /etc/os-release 1> /dev/null
 # Set the system back to read-only
 run_sudo steamos-readonly enable
 
-echo "Post-update completed successfully."
+echo "SteamOS post-update process completed successfully."
 
 exit 0
