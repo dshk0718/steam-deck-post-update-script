@@ -23,24 +23,27 @@ else
 	echo Current SteamOS Build "${BUILD_ID}"
 fi
 
+# Get the current user
+CURRENT_USER=$(whoami)
+
 # Prompt for password if only if the current user is `deck`
 # If the current user is root, there's no need for the password prompt
 # This is because the script is most likely running as a service
 # and the service is already running as root
-if [ "$(whoami)" == "deck" ]; then
+if [ "${CURRENT_USER}" == "deck" ]; then
 	PASSWORD=$(ksshaskpass -- "Please enter your password for sudo operations:" 2> /dev/null)
 	echo "Validating sudo password..."
 	if echo "$PASSWORD" | sudo -S -k -p "" echo "success" &> /dev/null; then
 		echo "Successfully validated sudo password. Continuing..."
 	else
-		echo "Password failed to validate or the user $(whoami) does not have sudo privileges."
+		echo "Password failed to validate or the user ${CURRENT_USER} does not have sudo privileges."
 		exit 1
 	fi
 fi
 
 # Create reusable function to run sudo commands with password and yes flag
 run_sudo() {
-	if [ -n "${PASSWORD}" ]; then
+	if [ -n "${PASSWORD}" ] && [ "${CURRENT_USER}" == "deck" ]; then
 		echo $PASSWORD | sudo -S -k -p "" $@
 	else
 		# Password was not prompted; run the command without password
@@ -107,65 +110,57 @@ if [ $? -ne 0 ]; then
 	echo "Error linking libalpm.so to libalpm.so.15."
 	exit 1
 fi
-# Run this part for installing Yay using the default `deck` user.
-# This is due to the  `makepkg` command having a hard limitation against the root user
-# running the command to prevent any potential permanent damage to the system by design.
-CURRENT_USER=$(whoami)
 
 # Create a function to force run the command `deck` user if ran by root
 # Otherwise, run the command as is
 run_as_user() {
-	if [ "${CURRENT_USER}" == "root" ]; then
+	if [ "${CURRENT_USER}" != "deck" ]; then
 		# Run the script as the `deck` user for installing Yay due to the `makepkg` limitation
-		sudo -u deck $@
-	elif [ "${CURRENT_USER}" == "deck" ]; then
-		$@
+		run_sudo -i -u deck $@
+	else
+		echo $PASSWORD | $@
 	fi
 }
 
-# Change to `SCRIPTS_DIR` directory before installing any user apps
-cd ${SCRIPTS_DIR}
-rm -rf ./yay-bin
-run_as_user git clone https://aur.archlinux.org/yay-bin.git >> ${LOG_FILE} 2>&1
+YAY_BIN_DIR=${SCRIPTS_DIR}/yay-bin
+run_sudo rm -rf ${YAY_BIN_DIR}
+run_as_user git clone https://aur.archlinux.org/yay-bin.git ${YAY_BIN_DIR} >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error cloning yay-bin repository."
 	exit 1
 fi
-cd yay-bin
-# Pacman version fix for installing Yay
-run_as_user sed -i -e 's/pacman>6.1/pacman>6/g' PKGBUILD >> ${LOG_FILE} 2>&1
+cd ${YAY_BIN_DIR}
+# # Pacman version fix for installing Yay
+run_as_user sed -i -e 's/pacman>6.1/pacman>6/g' ${YAY_BIN_DIR}/PKGBUILD >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error fixing the PKGBUILD file for yay."
 	exit 1
 fi
-run_as_user makepkg --noconfirm -s >> ${LOG_FILE} 2>&1
+run_as_user makepkg --noconfirm -si >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
-	echo "Error installing yay."
+	echo "Error building yay package."
 	exit 1
 fi
-run_sudo pacman --noconfirm -U yay-bin-*.pkg.tar.zst >> ${LOG_FILE} 2>&1
-if [ $? -ne 0 ]; then
-	echo "Error installing yay via pacman."
-	exit 1
-fi
-cd ..
-rm -rf ./yay-bin
+cd ${SCRIPTS_DIR}
+run_sudo rm -rf ${YAY_BIN_DIR}
+# run_sudo chown deck:deck /usr/bin/yay >> ${LOG_FILE} 2>&1
+# Install progress using yay
 run_as_user yay --noconfirm -S progress >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error installing progress via yay."
 	exit 1
 fi
 
-# Change to `SCRIPTS_DIR` directory before installing any user apps
-cd ${SCRIPTS_DIR}
 # Install Tailscale (See more here https://tailscale.com/)
-rm -rf ./deck-tailscale
-git clone https://github.com/tailscale-dev/deck-tailscale.git >> ${LOG_FILE} 2>&1
+TAILSCALE_DIR=${SCRIPTS_DIR}/deck-tailscale
+cd ${SCRIPTS_DIR}
+rm -rf ${TAILSCALE_DIR}
+run_as_user git clone https://github.com/tailscale-dev/deck-tailscale.git ${TAILSCALE_DIR} >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error cloning deck-tailscale repository."
 	exit 1
 fi
-cd deck-tailscale
+cd ${TAILSCALE_DIR}
 sed -i "s/^wget -q --show-progress*/wget -q/" ./tailscale.sh >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error modifying the tailscale.sh script."
@@ -181,7 +176,8 @@ if [ $? -ne 0 ]; then
 	echo "Error sourcing Tailscale profile."
 	exit 1
 fi
-rm -rf ./deck-tailscale
+cd ${SCRIPTS_DIR}
+rm -rf ${TAILSCALE_DIR}
 
 # Install Warp Terminal (See more here https://www.warp.dev/)
 run_sudo rm -rf /opt/warpdotdev/warp-terminal
