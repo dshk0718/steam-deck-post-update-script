@@ -52,6 +52,17 @@ run_sudo() {
 	fi
 }
 
+# Create a function to force run the command `deck` user if ran by root
+# Otherwise, run the command as is
+run_as_user() {
+	if [ "${CURRENT_USER}" != "deck" ]; then
+		# Run the script as the `deck` user for installing Yay due to the `makepkg` limitation
+		run_sudo -i -u deck $@
+	else
+		echo "$PASSWORD" | $@
+	fi
+}
+
 # Scripts directory
 SCRIPTS_DIR=/home/deck/.scripts
 
@@ -110,17 +121,6 @@ if [ $? -ne 0 ]; then
 	echo "Error linking libalpm.so to libalpm.so.15."
 	exit 1
 fi
-
-# Create a function to force run the command `deck` user if ran by root
-# Otherwise, run the command as is
-run_as_user() {
-	if [ "${CURRENT_USER}" != "deck" ]; then
-		# Run the script as the `deck` user for installing Yay due to the `makepkg` limitation
-		run_sudo -i -u deck $@
-	else
-		echo $PASSWORD | $@
-	fi
-}
 
 YAY_BIN_DIR=${SCRIPTS_DIR}/yay-bin
 run_sudo rm -rf ${YAY_BIN_DIR}
