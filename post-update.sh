@@ -95,7 +95,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Install Crypto Filesystem for enabling vault and Disk Quota
-run_sudo pacman --noconfirm --noprogressbar -S cryfs quota-tools >> ${LOG_FILE} 2>&1
+# Add Gnome-Keyring for VSCode keyring issue - https://github.com/microsoft/vscode/issues/189672
+run_sudo pacman --noconfirm --noprogressbar -S cryfs quota-tools gnome-keyring >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error installing cryfs and quota-tools."
 	exit 1
