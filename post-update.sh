@@ -131,7 +131,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 cd ${YAY_BIN_DIR}
-# # Pacman version fix for installing Yay
+# Pacman version fix for installing Yay
 run_as_user sed -i -e 's/pacman>6.1/pacman>6/g' ${YAY_BIN_DIR}/PKGBUILD >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error fixing the PKGBUILD file for yay."
@@ -145,7 +145,7 @@ fi
 cd ${SCRIPTS_DIR}
 run_sudo rm -rf ${YAY_BIN_DIR}
 # Install progress using yay
-run_as_user yay --noconfirm -S progress >> ${LOG_FILE} 2>&1
+run_as_user yay --noconfirm -S progress solaar >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
 	echo "Error installing progress via yay."
 	exit 1
