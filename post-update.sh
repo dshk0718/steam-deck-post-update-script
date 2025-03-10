@@ -44,7 +44,7 @@ fi
 # Create reusable function to run sudo commands with password and yes flag
 run_sudo() {
 	if [ -n "${PASSWORD}" ] && [ "${CURRENT_USER}" == "deck" ]; then
-		echo $PASSWORD | sudo -S -k -p "" $@
+		echo $PASSWORD | sudo -S -p "" $@
 	else
 		# Password was not prompted; run the command without password
 		# This is most likely because this script ran from the service as root
@@ -59,7 +59,7 @@ run_as_user() {
 		# Run the script as the `deck` user for installing Yay due to the `makepkg` limitation
 		run_sudo -i -u deck $@
 	else
-		echo "$PASSWORD" | $@
+		$@
 	fi
 }
 
@@ -144,7 +144,6 @@ if [ $? -ne 0 ]; then
 fi
 cd ${SCRIPTS_DIR}
 run_sudo rm -rf ${YAY_BIN_DIR}
-# run_sudo chown deck:deck /usr/bin/yay >> ${LOG_FILE} 2>&1
 # Install progress using yay
 run_as_user yay --noconfirm -S progress >> ${LOG_FILE} 2>&1
 if [ $? -ne 0 ]; then
